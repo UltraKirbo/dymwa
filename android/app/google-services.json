@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "674721421631",
+    "project_id": "dymwa-b2af2",
+    "storage_bucket": "dymwa-b2af2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:674721421631:android:3d4b9bbe1ad0971bd35b8a",
+        "android_client_info": {
+          "package_name": "com.example.dymwa"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBFL3-WmxiolCWVhpOq2WHIC5TTmFvboRw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

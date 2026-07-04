@@ -1,0 +1,21 @@
+{
+  "borders": {
+    "none": { "price": 0, "colors": [] },
+    "gold": { "price": 200, "colors": ["#FFFF00", "#FFC107", "#FFAB40"] },
+    "fire": { "price": 400, "colors": ["#F44336", "#FF5722", "#FFEB3B"] },
+    "neon": { "price": 600, "colors": ["#18FFFF", "#E040FB", "#FF4081"] },
+    "emerald": { "price": 800, "colors": ["#50C878", "#043927"] },
+    "abyss": { "price": 1000, "colors": ["#000000", "#1A237E", "#4A148C"] }
+  },
+  "titles": {
+    "": 0,
+    "Le Curieux": 150,
+    "L'Explorateur": 300,
+    "Le Grand Mage": 800,
+    "Légende Vivante": 1500,
+    "No-Life": 2000,
+    "Collectionneur de Pays": 3500,
+    "Seigneur des Dym-Coins": 5000,
+    "Le Boss Final": 9999
+  }
+}
