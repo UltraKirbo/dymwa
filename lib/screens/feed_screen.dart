@@ -91,26 +91,27 @@ class _FeedScreenState extends State<FeedScreen> {
   }
 
   Widget _buildAnswerPrompt() {
-    return Center(
+    return Align(
+      alignment: const Alignment(0, -0.6),
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.lock_outline, size: 60, color: Colors.grey),
-            const SizedBox(height: 24),
+            const Icon(Icons.lock_outline, size: 48, color: Colors.grey),
+            const SizedBox(height: 16),
             const Text(
-              "Les réponses de vos amis sont cachées.",
+              "Réponses cachées",
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             const Text(
-              "Répondez à la question pour découvrir ce qu'ils ont dit !",
+              "Publiez votre réponse pour découvrir ce qu'ils ont dit !",
               textAlign: TextAlign.center,
               style: TextStyle(color: Colors.grey, fontSize: 14),
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 24),
             TextField(
               controller: _answerController,
               maxLines: 4,

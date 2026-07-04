@@ -5,7 +5,9 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:convert';
 import '../services/gamification_service.dart';
 import '../utils/rpg_utils.dart';
+import '../services/step_service.dart';
 import 'settings_screen.dart';
+import '../widgets/full_screen_image_viewer.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -233,27 +235,39 @@ class _ProfileScreenState extends State<ProfileScreen> {
         padding: const EdgeInsets.all(24),
         children: [
           Center(
-            child: GestureDetector(
-              onTap: _pickAvatar,
-              child: Stack(
-                children: [
-                  Container(
+            child: Stack(
+              children: [
+                GestureDetector(
+                  onTap: () {
+                    if (_avatarBase64 != null) {
+                      Navigator.push(context, MaterialPageRoute(
+                        builder: (_) => FullScreenImageViewer(base64Image: _avatarBase64!, tag: 'my_avatar'),
+                      ));
+                    }
+                  },
+                  child: Container(
                     padding: _activeBorder != 'none' ? const EdgeInsets.all(6) : EdgeInsets.zero,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       gradient: GamificationService.getBorderGradient(_activeBorder),
                     ),
-                    child: CircleAvatar(
-                      radius: 60,
-                      backgroundColor: Colors.grey.shade800,
-                      child: _avatarBase64 != null
-                          ? ClipOval(child: Image.memory(base64Decode(_avatarBase64!), width: 120, height: 120, fit: BoxFit.cover))
-                          : const Icon(Icons.person, size: 60, color: Colors.white),
+                    child: Hero(
+                      tag: 'my_avatar',
+                      child: CircleAvatar(
+                        radius: 60,
+                        backgroundColor: Colors.grey.shade800,
+                        child: _avatarBase64 != null
+                            ? ClipOval(child: Image.memory(base64Decode(_avatarBase64!), width: 120, height: 120, fit: BoxFit.cover))
+                            : const Icon(Icons.person, size: 60, color: Colors.white),
+                      ),
                     ),
                   ),
-                  Positioned(
-                    bottom: 0,
-                    right: 0,
+                ),
+                Positioned(
+                  bottom: 0,
+                  right: 0,
+                  child: GestureDetector(
+                    onTap: _pickAvatar,
                     child: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
@@ -262,9 +276,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       child: const Icon(Icons.camera_alt, color: Colors.white, size: 20),
                     ),
-                  )
-                ],
-              ),
+                  ),
+                )
+              ],
             ),
           ),
           if (_activeTitle.isNotEmpty) ...[
@@ -276,6 +290,67 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
           ],
+          
+          const SizedBox(height: 16),
+          // --- Pedometer Card ---
+          StreamBuilder<int>(
+            stream: StepService().todayStepsStream,
+            initialData: 0, // En attendant la première valeur
+            builder: (context, snapshot) {
+              final steps = snapshot.data ?? 0;
+              final coinsEarned = steps ~/ 100;
+              
+              return Card(
+                elevation: 4,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    children: [
+                      const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.directions_walk, color: Colors.green, size: 28),
+                          SizedBox(width: 8),
+                          Text('Podomètre StreetPass', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          Column(
+                            children: [
+                              Text('$steps', style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: Colors.green)),
+                              const Text('Pas aujourd\'hui', style: TextStyle(color: Colors.grey)),
+                            ],
+                          ),
+                          Column(
+                            children: [
+                              Text('+$coinsEarned', style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: Colors.amber)),
+                              const Text('Dym-Coins gagnés', style: TextStyle(color: Colors.grey)),
+                            ],
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      LinearProgressIndicator(
+                        value: (steps % 100) / 100,
+                        backgroundColor: Colors.grey.shade300,
+                        color: Colors.green,
+                        minHeight: 8,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text('100 pas = 1 Dym-Coin', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+          // --- Fin Pedometer Card ---
+
           const SizedBox(height: 32),
           TextField(
             controller: _nameController,

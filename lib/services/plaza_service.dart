@@ -17,14 +17,19 @@ class PlazaService {
     final myData = myDoc.data()!;
     final peerData = peerDoc.data()!;
 
-    final myGender = myData['gender'] ?? 'Homme'; // Par défaut
+    final myGender = myData['gender'] ?? 'Garçon'; // Par défaut
     final myPreference = myData['preference'] ?? 'Les deux';
-    final peerGender = peerData['gender'] ?? 'Homme';
+    final peerGender = peerData['gender'] ?? 'Garçon';
     final peerPreference = peerData['preference'] ?? 'Les deux';
 
-    // Logique de filtre strict
-    bool iWantThem = (myPreference == 'Les deux') || (myPreference == peerGender);
-    bool theyWantMe = (peerPreference == 'Les deux') || (peerPreference == myGender);
+    // Logique de filtre strict (gestion des pluriels)
+    bool iWantThem = (myPreference == 'Les deux') || 
+                     (myPreference == 'Garçons' && peerGender == 'Garçon') || 
+                     (myPreference == 'Filles' && peerGender == 'Fille');
+                     
+    bool theyWantMe = (peerPreference == 'Les deux') || 
+                      (peerPreference == 'Garçons' && myGender == 'Garçon') || 
+                      (peerPreference == 'Filles' && myGender == 'Fille');
 
     if (!iWantThem || !theyWantMe) {
       // Incompatibilité, on ignore silencieusement la rencontre

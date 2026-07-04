@@ -23,6 +23,11 @@ class GamificationService {
   // Liste des titres et de leurs prix
   static Map<String, int> titlePrices = {};
 
+  // Données des quêtes chargées depuis JSON
+  static Map<String, dynamic> dailyQuestsConfig = {};
+  static Map<String, dynamic> permanentQuestsConfig = {};
+  static Map<String, dynamic> bonusQuestsConfig = {};
+
   // Charger les données depuis le fichier JSON
   static Future<void> loadShopItems() async {
     try {
@@ -44,6 +49,18 @@ class GamificationService {
       borderPrices = {'none': 0};
       borderColors = {'none': []};
       titlePrices = {'': 0};
+    }
+  }
+
+  static Future<void> loadQuests() async {
+    try {
+      final String response = await rootBundle.loadString('assets/data/quests.json');
+      final data = await json.decode(response);
+      dailyQuestsConfig = data['daily'] ?? {};
+      permanentQuestsConfig = data['permanent'] ?? {};
+      bonusQuestsConfig = data['bonus'] ?? {};
+    } catch (e) {
+      print("Erreur de chargement des quêtes : $e");
     }
   }
 
@@ -195,14 +212,8 @@ class GamificationService {
       
       quests['last_daily_date'] = todayKey;
       
-      // Liste des quêtes possibles
-      List<String> pool = [
-        'daily_send_image',
-        'daily_send_voice',
-        'daily_play_game',
-        'daily_send_messages_5',
-        'daily_add_friend'
-      ];
+      // Liste des quêtes possibles depuis la configuration (sauf target friend qui a une logique spéciale)
+      List<String> pool = dailyQuestsConfig.keys.where((k) => k != 'daily_target_friend').toList();
       
       // Tirage de l'ami aléatoire si possible
       QuerySnapshot friendsSnap = await userRef.collection('friends').get();
@@ -294,63 +305,30 @@ class GamificationService {
     bool madeChange = false;
     List<dynamic> dailyList = quests['daily_quests_list'] ?? [];
     
-    // Quêtes Quotidiennes
-    if (action == 'messages_sent' && dailyCount >= 5 && dailyList.contains('daily_send_messages_5')) {
-      if (quests['daily_messages_claimed'] != true) {
-        addCoins(20);
-        quests['daily_messages_claimed'] = true;
-        madeChange = true;
+    // Quêtes Quotidiennes Dynamiques
+    dailyQuestsConfig.forEach((questId, questData) {
+      if (action == questData['action'] && dailyCount >= questData['required_count'] && dailyList.contains(questId)) {
+        String key = questData['key'];
+        if (quests[key] != true) {
+          addCoins(questData['reward']);
+          quests[key] = true;
+          madeChange = true;
+        }
       }
-    }
-    if (action == 'image_sent' && dailyCount >= 1 && dailyList.contains('daily_send_image')) {
-      if (quests['daily_image_claimed'] != true) {
-        addCoins(10);
-        quests['daily_image_claimed'] = true;
-        madeChange = true;
-      }
-    }
-    if (action == 'voice_messages_sent' && dailyCount >= 1 && dailyList.contains('daily_send_voice')) {
-      if (quests['daily_voice_claimed'] != true) {
-        addCoins(10);
-        quests['daily_voice_claimed'] = true;
-        madeChange = true;
-      }
-    }
-    if (action == 'games_played' && dailyCount >= 1 && dailyList.contains('daily_play_game')) {
-      if (quests['daily_games_claimed'] != true) {
-        addCoins(15);
-        quests['daily_games_claimed'] = true;
-        madeChange = true;
-      }
-    }
-    if (action == 'friends_added' && dailyCount >= 1 && dailyList.contains('daily_add_friend')) {
-      if (quests['daily_friends_claimed'] != true) {
-        addCoins(15);
-        quests['daily_friends_claimed'] = true;
-        madeChange = true;
-      }
-    }
-    if (action == 'daily_target_messages' && dailyCount >= 1 && dailyList.contains('daily_target_friend')) {
-      if (quests['daily_target_claimed'] != true) {
-        addCoins(15);
-        quests['daily_target_claimed'] = true;
-        madeChange = true;
-      }
-    }
+    });
     
     // Bonus Grand Chelem
     int completedDailies = 0;
     for (String qId in dailyList) {
-      if (qId == 'daily_send_image' && quests['daily_image_claimed'] == true) completedDailies++;
-      if (qId == 'daily_send_voice' && quests['daily_voice_claimed'] == true) completedDailies++;
-      if (qId == 'daily_play_game' && quests['daily_games_claimed'] == true) completedDailies++;
-      if (qId == 'daily_send_messages_5' && quests['daily_messages_claimed'] == true) completedDailies++;
-      if (qId == 'daily_add_friend' && quests['daily_friends_claimed'] == true) completedDailies++;
-      if (qId == 'daily_target_friend' && quests['daily_target_claimed'] == true) completedDailies++;
+      if (dailyQuestsConfig.containsKey(qId)) {
+        String key = dailyQuestsConfig[qId]['key'];
+        if (quests[key] == true) completedDailies++;
+      }
     }
 
     if (completedDailies == 3 && quests['daily_bonus_claimed'] != true && dailyList.length == 3) {
-      addCoins(50);
+      int bonusReward = bonusQuestsConfig['daily_grand_chelem']?['reward'] ?? 10;
+      addCoins(bonusReward);
       quests['daily_bonus_claimed'] = true;
       madeChange = true;
     }
@@ -359,30 +337,16 @@ class GamificationService {
     if (madeChange) {
        _firestore.collection('users').doc(uid).set({'questProgress': quests}, SetOptions(merge: true));
     }
-    // Quêtes Permanentes
-    if (action == 'messages_sent' && permCount == 100) {
-      if (quests['messages_sent_claimed'] != true) {
-        addCoins(500);
-        _firestore.collection('users').doc(uid).set({'questProgress': {'messages_sent_claimed': true}}, SetOptions(merge: true));
+    
+    // Quêtes Permanentes Dynamiques
+    permanentQuestsConfig.forEach((questId, questData) {
+      if (action == questData['action'] && permCount == questData['required_count']) {
+        String key = questData['key'];
+        if (quests[key] != true) {
+          addCoins(questData['reward']);
+          _firestore.collection('users').doc(uid).set({'questProgress': {key: true}}, SetOptions(merge: true));
+        }
       }
-    }
-    if (action == 'friends_added' && permCount == 10) {
-      if (quests['friends_added_claimed'] != true) {
-        addCoins(300);
-        _firestore.collection('users').doc(uid).set({'questProgress': {'friends_added_claimed': true}}, SetOptions(merge: true));
-      }
-    }
-    if (action == 'voice_messages_sent' && permCount == 5) {
-      if (quests['voice_messages_sent_claimed'] != true) {
-        addCoins(150);
-        _firestore.collection('users').doc(uid).set({'questProgress': {'voice_messages_sent_claimed': true}}, SetOptions(merge: true));
-      }
-    }
-    if (action == 'games_played' && permCount == 3) {
-      if (quests['games_played_claimed'] != true) {
-        addCoins(200);
-        _firestore.collection('users').doc(uid).set({'questProgress': {'games_played_claimed': true}}, SetOptions(merge: true));
-      }
-    }
+    });
   }
 }

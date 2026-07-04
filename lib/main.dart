@@ -8,6 +8,9 @@ import 'firebase_options.dart';
 import 'services/notification_service.dart';
 import 'services/background_scanner.dart';
 import 'services/gamification_service.dart';
+import 'services/step_service.dart';
+import 'services/ad_service.dart';
+import 'services/moderation_service.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 
 void main() async {
@@ -23,8 +26,12 @@ void main() async {
   }
 
   await GamificationService.loadShopItems();
+  await GamificationService.loadQuests();
   await NotificationService().init();
   await initializeBackgroundService();
+  await StepService().init(); // Initialiser le pédomètre
+  await AdService().init(); // Initialiser AdMob
+  await ModerationService().init(); // Initialiser la modération
   
   runApp(
     MultiProvider(

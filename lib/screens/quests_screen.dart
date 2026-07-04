@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../services/gamification_service.dart';
 import 'shop_screen.dart';
 import '../theme.dart';
 
@@ -42,23 +43,43 @@ class QuestsScreen extends StatelessWidget {
           List<Widget> dailyQuestWidgets = [];
           
           for (String qId in dailyList) {
-             var qData = _getQuestData(qId, quests);
-             if (qData.isEmpty) continue;
+             var qData = GamificationService.dailyQuestsConfig[qId];
+             if (qData == null) continue;
              
-             if (qData['isClaimed'] == true) {
-               completedDailies++;
+             String action = qData['action'];
+             String key = qData['key'];
+             int requiredCount = qData['required_count'];
+             int progress = 0;
+             
+             if (action == 'messages_sent') progress = quests['daily_messages'] ?? 0;
+             else if (action == 'image_sent') progress = quests['daily_image'] ?? 0;
+             else if (action == 'voice_messages_sent') progress = quests['daily_voice'] ?? 0;
+             else if (action == 'games_played') progress = quests['daily_games'] ?? 0;
+             else if (action == 'friends_added') progress = quests['daily_friends'] ?? 0;
+             else if (action == 'daily_target_messages') progress = quests['daily_target_messages'] ?? 0;
+             
+             bool isClaimed = quests[key] ?? false;
+             bool isCompleted = progress >= requiredCount;
+             
+             if (isClaimed) completedDailies++;
+             
+             String title = qData['title'] ?? 'Quête';
+             String subtitle = qData['subtitle'] ?? 'Objectif';
+             if (qId == 'daily_target_friend') {
+               String tName = quests['daily_target_name'] ?? '';
+               if (tName.isNotEmpty) subtitle = "Envoyer un message à $tName";
              }
              
              dailyQuestWidgets.add(_buildQuestCard(
                 context: context,
-                title: qData['title'],
-                subtitle: qData['subtitle'],
-                progress: qData['progress'],
-                maxProgress: qData['maxProgress'],
-                reward: qData['reward'],
-                isCompleted: qData['isCompleted'],
-                isClaimed: qData['isClaimed'],
-                icon: qData['icon'],
+                title: title,
+                subtitle: subtitle,
+                progress: progress,
+                maxProgress: requiredCount,
+                reward: qData['reward'] ?? 0,
+                isCompleted: isCompleted,
+                isClaimed: isClaimed,
+                icon: _getIconFromName(qData['icon'] ?? ''),
              ));
           }
           
@@ -202,50 +223,28 @@ class QuestsScreen extends StatelessWidget {
                     ListView(
                       padding: const EdgeInsets.only(left: 16, right: 16, top: 8, bottom: 100),
                       children: [
-                        _buildQuestCard(
-                          context: context,
-                          title: 'L\'art de la conversation',
-                          subtitle: 'Envoyer 100 messages au total',
-                          progress: messagesSent,
-                          maxProgress: 100,
-                          reward: 500,
-                          isCompleted: messagesSent >= 100,
-                          isClaimed: messagesSent >= 100,
-                          icon: Icons.forum_rounded,
-                        ),
-                        _buildQuestCard(
-                          context: context,
-                          title: 'Réseau Élargi',
-                          subtitle: 'Ajouter 10 amis au total',
-                          progress: friendsAdded,
-                          maxProgress: 10,
-                          reward: 300,
-                          isCompleted: friendsAdded >= 10,
-                          isClaimed: friendsAddedClaimed,
-                          icon: Icons.group_add_rounded,
-                        ),
-                        _buildQuestCard(
-                          context: context,
-                          title: 'La Voix d\'Or',
-                          subtitle: 'Envoyer 5 messages vocaux',
-                          progress: voiceMessagesSent,
-                          maxProgress: 5,
-                          reward: 150,
-                          isCompleted: voiceMessagesSent >= 5,
-                          isClaimed: voiceMessagesSentClaimed,
-                          icon: Icons.mic_rounded,
-                        ),
-                        _buildQuestCard(
-                          context: context,
-                          title: 'Grand Maître',
-                          subtitle: 'Terminer 3 parties de Puissance 4',
-                          progress: gamesPlayed,
-                          maxProgress: 3,
-                          reward: 200,
-                          isCompleted: gamesPlayed >= 3,
-                          isClaimed: gamesPlayedClaimed,
-                          icon: Icons.gamepad_rounded,
-                        ),
+                        // Les Quêtes Permanentes sont générées dynamiquement
+                        ...GamificationService.permanentQuestsConfig.entries.map((entry) {
+                           final qData = entry.value;
+                           String action = qData['action'];
+                           String key = qData['key'];
+                           int requiredCount = qData['required_count'];
+                           int progress = quests[action] ?? 0; // L'action correspond à la clé de progression permanente
+                           bool isClaimed = quests[key] ?? false;
+                           bool isCompleted = progress >= requiredCount;
+
+                           return _buildQuestCard(
+                             context: context,
+                             title: qData['title'] ?? 'Quête',
+                             subtitle: qData['subtitle'] ?? 'Objectif',
+                             progress: progress,
+                             maxProgress: requiredCount,
+                             reward: qData['reward'] ?? 0,
+                             isCompleted: isCompleted,
+                             isClaimed: isClaimed,
+                             icon: _getIconFromName(qData['icon'] ?? ''),
+                           );
+                        }).toList(),
                       ],
                     ),
                   ],
@@ -266,83 +265,17 @@ class QuestsScreen extends StatelessWidget {
     return body;
   }
 
-  Map<String, dynamic> _getQuestData(String questId, Map<String, dynamic> quests) {
-    switch (questId) {
-      case 'daily_send_image':
-        int prog = quests['daily_image'] ?? 0;
-        return {
-          'title': 'Le Photographe',
-          'subtitle': 'Envoyer 1 photo',
-          'progress': prog,
-          'maxProgress': 1,
-          'reward': 10,
-          'isCompleted': prog >= 1,
-          'isClaimed': quests['daily_image_claimed'] ?? false,
-          'icon': Icons.camera_alt_rounded,
-        };
-      case 'daily_send_voice':
-        int prog = quests['daily_voice'] ?? 0;
-        return {
-          'title': 'La Voix d\'Or',
-          'subtitle': 'Envoyer 1 message vocal',
-          'progress': prog,
-          'maxProgress': 1,
-          'reward': 10,
-          'isCompleted': prog >= 1,
-          'isClaimed': quests['daily_voice_claimed'] ?? false,
-          'icon': Icons.mic_rounded,
-        };
-      case 'daily_play_game':
-        int prog = quests['daily_games'] ?? 0;
-        return {
-          'title': 'Le Stratège',
-          'subtitle': 'Terminer 1 partie de Puissance 4',
-          'progress': prog,
-          'maxProgress': 1,
-          'reward': 15,
-          'isCompleted': prog >= 1,
-          'isClaimed': quests['daily_games_claimed'] ?? false,
-          'icon': Icons.gamepad_rounded,
-        };
-      case 'daily_send_messages_5':
-        int prog = quests['daily_messages'] ?? 0;
-        return {
-          'title': 'Le Bavard',
-          'subtitle': 'Envoyer 5 messages au total',
-          'progress': prog,
-          'maxProgress': 5,
-          'reward': 20,
-          'isCompleted': prog >= 5,
-          'isClaimed': quests['daily_messages_claimed'] ?? false,
-          'icon': Icons.chat_bubble_rounded,
-        };
-      case 'daily_add_friend':
-        int prog = quests['daily_friends'] ?? 0;
-        return {
-          'title': 'Le Radar',
-          'subtitle': 'Ajouter 1 nouvel ami',
-          'progress': prog,
-          'maxProgress': 1,
-          'reward': 15,
-          'isCompleted': prog >= 1,
-          'isClaimed': quests['daily_friends_claimed'] ?? false,
-          'icon': Icons.person_add_alt_1_rounded,
-        };
-      case 'daily_target_friend':
-        int prog = quests['daily_target_messages'] ?? 0;
-        String tName = quests['daily_target_name'] ?? '';
-        return {
-          'title': 'Prendre des nouvelles',
-          'subtitle': 'Envoyer un message à $tName',
-          'progress': prog,
-          'maxProgress': 1,
-          'reward': 15,
-          'isCompleted': prog >= 1,
-          'isClaimed': quests['daily_target_claimed'] ?? false,
-          'icon': Icons.volunteer_activism,
-        };
-      default:
-        return {};
+  IconData _getIconFromName(String iconName) {
+    switch (iconName) {
+      case 'chat_bubble_rounded': return Icons.chat_bubble_rounded;
+      case 'camera_alt_rounded': return Icons.camera_alt_rounded;
+      case 'mic_rounded': return Icons.mic_rounded;
+      case 'gamepad_rounded': return Icons.gamepad_rounded;
+      case 'person_add_alt_1_rounded': return Icons.person_add_alt_1_rounded;
+      case 'volunteer_activism': return Icons.volunteer_activism;
+      case 'forum_rounded': return Icons.forum_rounded;
+      case 'group_add_rounded': return Icons.group_add_rounded;
+      default: return Icons.stars;
     }
   }
 

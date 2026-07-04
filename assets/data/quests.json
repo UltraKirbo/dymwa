@@ -1,0 +1,19 @@
+{
+  "daily": {
+    "daily_send_messages_5": { "action": "messages_sent", "required_count": 5, "reward": 5, "key": "daily_messages_claimed", "title": "Le Bavard", "subtitle": "Envoyer 5 messages au total", "icon": "chat_bubble_rounded" },
+    "daily_send_image": { "action": "image_sent", "required_count": 1, "reward": 2, "key": "daily_image_claimed", "title": "Le Photographe", "subtitle": "Envoyer 1 photo", "icon": "camera_alt_rounded" },
+    "daily_send_voice": { "action": "voice_messages_sent", "required_count": 1, "reward": 2, "key": "daily_voice_claimed", "title": "La Voix d'Or", "subtitle": "Envoyer 1 message vocal", "icon": "mic_rounded" },
+    "daily_play_game": { "action": "games_played", "required_count": 1, "reward": 3, "key": "daily_games_claimed", "title": "Le Stratège", "subtitle": "Terminer 1 partie de Puissance 4", "icon": "gamepad_rounded" },
+    "daily_add_friend": { "action": "friends_added", "required_count": 1, "reward": 3, "key": "daily_friends_claimed", "title": "Le Radar", "subtitle": "Ajouter 1 nouvel ami", "icon": "person_add_alt_1_rounded" },
+    "daily_target_friend": { "action": "daily_target_messages", "required_count": 1, "reward": 3, "key": "daily_target_claimed", "title": "Prendre des nouvelles", "subtitle": "Envoyer un message à la cible du jour", "icon": "volunteer_activism" }
+  },
+  "bonus": {
+    "daily_grand_chelem": { "reward": 10, "key": "daily_bonus_claimed", "title": "Bonus Grand Chelem", "subtitle": "Complétez les 3 quêtes quotidiennes" }
+  },
+  "permanent": {
+    "messages_100": { "action": "messages_sent", "required_count": 100, "reward": 50, "key": "messages_sent_claimed", "title": "L'art de la conversation", "subtitle": "Envoyer 100 messages au total", "icon": "forum_rounded" },
+    "friends_10": { "action": "friends_added", "required_count": 10, "reward": 30, "key": "friends_added_claimed", "title": "Réseau Élargi", "subtitle": "Ajouter 10 amis au total", "icon": "group_add_rounded" },
+    "voice_5": { "action": "voice_messages_sent", "required_count": 5, "reward": 15, "key": "voice_messages_sent_claimed", "title": "La Voix d'Or", "subtitle": "Envoyer 5 messages vocaux", "icon": "mic_rounded" },
+    "games_3": { "action": "games_played", "required_count": 3, "reward": 20, "key": "games_played_claimed", "title": "Grand Maître", "subtitle": "Terminer 3 parties de Puissance 4", "icon": "gamepad_rounded" }
+  }
+}

@@ -108,17 +108,18 @@ class _WorldMapScreenState extends State<WorldMapScreen> {
                 ),
               ),
               Expanded(
-                child: Center(
-                  child: InteractiveViewer(
-                    minScale: 0.1,
-                    maxScale: 4.0,
-                    boundaryMargin: EdgeInsets.zero,
-                    constrained: false,
-                    child: Container(
-                      width: 1600,
-                      height: 1000,
-                      padding: const EdgeInsets.all(16.0),
-                      child: SimpleMap(
+                child: Container(
+                  width: double.infinity,
+                  color: isDark ? const Color(0xFF121212) : const Color(0xFFE8F1F5), // Fond uni, doux et discret
+                  child: Center(
+                    child: InteractiveViewer(
+                      minScale: 1.0, // On ne peut pas dézoomer plus que la taille de l'écran
+                      maxScale: 4.0,
+                      boundaryMargin: EdgeInsets.zero, // Pas de marge en dehors de la carte
+                      constrained: true, // La carte s'adapte à l'écran par défaut
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: SimpleMap(
                         instructions: SMapWorld.instructions,
                         defaultColor: isDark ? Colors.grey.shade800 : Colors.grey.shade300,
                         colors: mapColors,
@@ -133,6 +134,7 @@ class _WorldMapScreenState extends State<WorldMapScreen> {
                     ),
                   ),
                 ),
+              ),
               ),
             ],
           );

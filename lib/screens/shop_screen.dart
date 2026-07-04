@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/gamification_service.dart';
+import '../services/ad_service.dart';
 import '../theme.dart';
 
 class ShopScreen extends StatelessWidget {
@@ -32,13 +33,16 @@ class ShopScreen extends StatelessWidget {
             
             final data = snapshot.data!.data() as Map<String, dynamic>? ?? {};
             final int coins = data['coins'] ?? 0;
+            final String lastAdDate = data['last_ad_date'] ?? '';
+            final String todayStr = DateTime.now().toIso8601String().substring(0, 10);
+            final bool hasWatchedAdToday = lastAdDate == todayStr;
 
             return Column(
               children: [
                 // --- HEADER SOLDE ---
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 32),
+                  padding: const EdgeInsets.symmetric(vertical: 24),
                   decoration: BoxDecoration(
                     color: primaryColor.withOpacity(0.05),
                     border: Border(bottom: BorderSide(color: primaryColor.withOpacity(0.1))),
@@ -54,6 +58,39 @@ class ShopScreen extends StatelessWidget {
                           const SizedBox(width: 12),
                           Text('$coins', style: TextStyle(fontSize: 48, fontWeight: FontWeight.w900, color: Theme.of(context).textTheme.bodyLarge?.color, letterSpacing: -2)),
                         ],
+                      ),
+                      const SizedBox(height: 16),
+                      // BOUTON PUBLICITÉ
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 32),
+                        child: ElevatedButton.icon(
+                          onPressed: hasWatchedAdToday ? null : () {
+                            AdService().showRewardedAd(() {
+                              GamificationService().addCoins(50);
+                              FirebaseFirestore.instance.collection('users').doc(uid).set({
+                                'last_ad_date': todayStr
+                              }, SetOptions(merge: true));
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                                  content: Text('+50 Dym-Coins ajoutés !'),
+                                  backgroundColor: Colors.green,
+                                ));
+                              }
+                            });
+                          },
+                          icon: Icon(hasWatchedAdToday ? Icons.check_circle : Icons.play_circle_filled, size: 24),
+                          label: Text(
+                            hasWatchedAdToday ? 'Revenez demain' : 'Regarder une pub (+50)',
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: hasWatchedAdToday ? Colors.grey : primaryColor,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                            minimumSize: const Size(double.infinity, 45),
+                          ),
+                        ),
                       ),
                     ],
                   ),

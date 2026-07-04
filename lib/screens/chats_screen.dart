@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'chat_detail_screen.dart';
 import '../services/chat_service.dart';
 import '../services/friend_service.dart';
+import '../services/moderation_service.dart';
 import '../theme.dart';
 
 class ChatsScreen extends StatelessWidget {
@@ -84,26 +85,50 @@ class ChatsScreen extends StatelessWidget {
           return const Center(child: CircularProgressIndicator());
         }
 
-        // On filtre pour ne garder que les conversations avec au moins 1 message
+        // On filtre pour ne garder que les conversations avec au moins 1 message et non bloquées
         final chats = snapshot.data!.docs.where((doc) {
           final data = doc.data() as Map<String, dynamic>;
           final lastMsg = data['lastMessage'] as String?;
-          return lastMsg != null && lastMsg.trim().isNotEmpty;
+          if (lastMsg == null || lastMsg.trim().isEmpty) return false;
+          
+          String peerId = "";
+          for (String key in data.keys) {
+            if (key.startsWith('user_') && key != 'user_$myUid') {
+              peerId = key.substring(5);
+            }
+          }
+          if (ModerationService().isBlocked(peerId)) return false;
+          return true;
         }).toList();
 
         if (chats.isEmpty) {
           return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.chat_bubble_outline, size: 80, color: Colors.grey.shade300),
-                const SizedBox(height: 16),
-                const Text(
-                  "Aucune discussion en cours.\nAllez dans 'Amis' pour commencer !",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.grey, fontSize: 16),
-                ),
-              ],
+            child: Padding(
+              padding: const EdgeInsets.all(32.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).primaryColor.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(Icons.chat_bubble_outline, size: 80, color: Theme.of(context).primaryColor.withOpacity(0.5)),
+                  ),
+                  const SizedBox(height: 24),
+                  const Text(
+                    "Aucune discussion en cours.",
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    "Vos échanges apparaîtront ici. Allez dans 'Amis' pour commencer à discuter !",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.grey, fontSize: 16),
+                  ),
+                ],
+              ),
             ),
           );
         }
@@ -125,35 +150,47 @@ class ChatsScreen extends StatelessWidget {
               }
             }
 
-            return Container(
-              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: AppTheme.softShadow,
-              ),
-              child: ListTile(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                leading: CircleAvatar(
-                  radius: 26,
-                  backgroundColor: Theme.of(context).primaryColor,
-                  child: const Icon(Icons.person, color: Colors.white, size: 30),
-                ),
-                title: Text(peerName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                subtitle: Text(chat['lastMessage'] ?? '', maxLines: 1, overflow: TextOverflow.ellipsis),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => ChatDetailScreen(
-                        chatId: chatId,
-                        peerName: peerName,
-                        peerId: peerId,
-                      ),
+            return FutureBuilder<DocumentSnapshot>(
+              future: FirebaseFirestore.instance.collection('users').doc(peerId).get(),
+              builder: (context, userSnapshot) {
+                if (userSnapshot.hasData && userSnapshot.data!.exists) {
+                  final userData = userSnapshot.data!.data() as Map<String, dynamic>;
+                  if (userData['name'] != null && userData['name'].toString().isNotEmpty) {
+                    peerName = userData['name'];
+                  }
+                }
+
+                return Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surface,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: AppTheme.softShadow,
+                  ),
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                    leading: CircleAvatar(
+                      radius: 26,
+                      backgroundColor: Theme.of(context).primaryColor,
+                      child: const Icon(Icons.person, color: Colors.white, size: 30),
                     ),
-                  );
-                },
-              ),
+                    title: Text(peerName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                    subtitle: Text(chat['lastMessage'] ?? '', maxLines: 1, overflow: TextOverflow.ellipsis),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => ChatDetailScreen(
+                            chatId: chatId,
+                            peerName: peerName,
+                            peerId: peerId,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                );
+              },
             );
           },
         );
@@ -171,17 +208,33 @@ class ChatsScreen extends StatelessWidget {
 
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
           return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.people_outline, size: 80, color: Colors.grey.shade300),
-                const SizedBox(height: 16),
-                const Text(
-                  "Vous n'avez pas encore d'amis.\nUtilisez le Radar pour en ajouter !",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.grey, fontSize: 16),
-                ),
-              ],
+            child: Padding(
+              padding: const EdgeInsets.all(32.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).primaryColor.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(Icons.people_outline, size: 80, color: Theme.of(context).primaryColor.withOpacity(0.5)),
+                  ),
+                  const SizedBox(height: 24),
+                  const Text(
+                    "Vous n'avez pas encore d'amis.",
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    "Utilisez le Radar sur La Place pour faire des rencontres et ajouter des amis !",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.grey, fontSize: 16),
+                  ),
+                ],
+              ),
             ),
           );
         }

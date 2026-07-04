@@ -9,6 +9,8 @@ import 'package:record/record.dart';
 import 'package:path_provider/path_provider.dart';
 import '../services/chat_service.dart';
 import '../services/call_service.dart';
+import '../services/moderation_service.dart';
+import '../widgets/full_screen_image_viewer.dart';
 import 'call_screen.dart';
 import '../widgets/connect_four_widget.dart';
 import '../widgets/audio_message_widget.dart';
@@ -31,9 +33,9 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   final String myUid = FirebaseAuth.instance.currentUser?.uid ?? "";
   
   // Nouveaux états
+  Map<String, dynamic>? _peerData;
   String? _peerAvatarBase64;
   String _peerActiveBorder = 'none';
-  bool _isEphemeralMode = false;
   Timer? _typingTimer;
   
   // États de l'interface Avancée
@@ -56,8 +58,9 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     final doc = await FirebaseFirestore.instance.collection('users').doc(widget.peerId).get();
     if (doc.exists && mounted) {
       setState(() {
-        _peerAvatarBase64 = doc.data()?['avatarBase64'];
-        _peerActiveBorder = doc.data()?['activeBorder'] ?? 'none';
+        _peerData = doc.data();
+        _peerAvatarBase64 = _peerData?['avatarBase64'];
+        _peerActiveBorder = _peerData?['activeBorder'] ?? 'none';
       });
     }
   }
@@ -102,20 +105,98 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     final ImagePicker picker = ImagePicker();
     final XFile? image = await picker.pickImage(source: ImageSource.gallery, imageQuality: 30, maxWidth: 600);
     if (image != null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Envoi de l\'image en cours...')));
-      try {
-        await _chatService.sendImageMessage(widget.chatId, File(image.path), replyToId: _replyingToId, replyToText: _replyingToText, isEphemeral: _isEphemeralMode);
-        setState(() {
-          _replyingToId = null;
-          _replyingToText = null;
-        });
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text("Échec de l'envoi. Firebase Storage est-il activé ?\n$e"),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 5),
-          ));
+      if (!mounted) return;
+      
+      bool isEphemeral = false;
+      final bool? confirmSend = await showDialog<bool>(
+        context: context,
+        builder: (context) {
+          return StatefulBuilder(
+            builder: (context, setDialogState) {
+              return Dialog(
+                backgroundColor: Colors.black,
+                insetPadding: EdgeInsets.zero,
+                child: SafeArea(
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.close, color: Colors.white),
+                            onPressed: () => Navigator.pop(context, null),
+                          ),
+                          const Text("Aperçu", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                          const SizedBox(width: 48), // Pour centrer le titre
+                        ],
+                      ),
+                      Expanded(
+                        child: InteractiveViewer(
+                          child: Image.file(File(image.path), fit: BoxFit.contain),
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        color: Colors.black54,
+                        child: Row(
+                          children: [
+                            GestureDetector(
+                              onTap: () {
+                                setDialogState(() {
+                                  isEphemeral = !isEphemeral;
+                                });
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                decoration: BoxDecoration(
+                                  color: isEphemeral ? Colors.purpleAccent.withOpacity(0.2) : Colors.transparent,
+                                  border: Border.all(color: isEphemeral ? Colors.purpleAccent : Colors.grey),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(isEphemeral ? Icons.visibility_off : Icons.visibility, color: isEphemeral ? Colors.purpleAccent : Colors.grey, size: 20),
+                                    const SizedBox(width: 8),
+                                    Text("Vue unique", style: TextStyle(color: isEphemeral ? Colors.purpleAccent : Colors.grey, fontWeight: FontWeight.bold)),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const Spacer(),
+                            FloatingActionButton(
+                              backgroundColor: Theme.of(context).primaryColor,
+                              onPressed: () => Navigator.pop(context, true),
+                              child: const Icon(Icons.send, color: Colors.white),
+                            )
+                          ],
+                        ),
+                      )
+                    ],
+                  ),
+                ),
+              );
+            }
+          );
+        }
+      );
+
+      if (confirmSend == true) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Envoi de l\'image en cours...')));
+        try {
+          await _chatService.sendImageMessage(widget.chatId, File(image.path), replyToId: _replyingToId, replyToText: _replyingToText, isEphemeral: isEphemeral);
+          setState(() {
+            _replyingToId = null;
+            _replyingToText = null;
+          });
+        } catch (e) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text("Échec de l'envoi.\n$e"),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 5),
+            ));
+          }
         }
       }
     }
@@ -292,29 +373,178 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     );
   }
 
+  void _showUserProfile() {
+    if (_peerData == null) return;
+    
+    final greeting = _peerData!['greeting'] ?? 'Salut !';
+    final bio = _peerData!['bio'] ?? '';
+    final activeTitle = _peerData!['activeTitle'] ?? '';
+    final rpgClass = _peerData!['rpgClass'] ?? '';
+    
+    showDialog(
+      context: context,
+      builder: (_) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              GestureDetector(
+                onTap: () {
+                  if (_peerAvatarBase64 != null && _peerAvatarBase64!.isNotEmpty) {
+                    Navigator.push(context, MaterialPageRoute(
+                      builder: (_) => FullScreenImageViewer(base64Image: _peerAvatarBase64!, tag: 'profile_dialog_${widget.peerId}'),
+                    ));
+                  }
+                },
+                child: Container(
+                  padding: _peerActiveBorder != 'none' ? const EdgeInsets.all(4) : EdgeInsets.zero,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: _getBorderGradient(_peerActiveBorder),
+                  ),
+                  child: Hero(
+                    tag: 'profile_dialog_${widget.peerId}',
+                    child: CircleAvatar(
+                      radius: 50,
+                      backgroundColor: Colors.grey.shade800,
+                      child: _peerAvatarBase64 != null
+                          ? ClipOval(child: Image.memory(base64Decode(_peerAvatarBase64!), width: 100, height: 100, fit: BoxFit.cover))
+                          : const Icon(Icons.person, size: 50, color: Colors.white),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(widget.peerName, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+              if (activeTitle.isNotEmpty)
+                Text(activeTitle, style: const TextStyle(color: Colors.orange, fontWeight: FontWeight.bold, fontStyle: FontStyle.italic)),
+              
+              if (rpgClass.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.shield, color: Colors.purpleAccent, size: 16),
+                      const SizedBox(width: 4),
+                      Text(rpgClass, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.purpleAccent)),
+                    ],
+                  ),
+                ),
+                
+              const SizedBox(height: 16),
+              
+              if (greeting.isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  margin: const EdgeInsets.only(bottom: 12),
+                  decoration: BoxDecoration(color: Colors.grey.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+                  child: Text('"$greeting"', style: const TextStyle(fontStyle: FontStyle.italic), textAlign: TextAlign.center),
+                ),
+                
+              if (bio.isNotEmpty)
+                Text(bio, textAlign: TextAlign.center, style: const TextStyle(fontSize: 14)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showReportDialog() {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text("Signaler ${widget.peerName}"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              title: const Text("Faux profil / Spam"),
+              onTap: () {
+                ModerationService().reportUser(widget.peerId, widget.peerName, "Spam");
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Signalement envoyé.')));
+              },
+            ),
+            ListTile(
+              title: const Text("Contenu inapproprié"),
+              onTap: () {
+                ModerationService().reportUser(widget.peerId, widget.peerName, "Inapproprié");
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Signalement envoyé.')));
+              },
+            ),
+            ListTile(
+              title: const Text("Harcèlement"),
+              onTap: () {
+                ModerationService().reportUser(widget.peerId, widget.peerName, "Harcèlement");
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Signalement envoyé.')));
+              },
+            ),
+          ],
+        ),
+      )
+    );
+  }
+
+  void _showBlockDialog() {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Bloquer cet utilisateur ?"),
+        content: Text("Vous ne pourrez plus échanger avec ${widget.peerName}."),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Annuler")),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () async {
+              await ModerationService().blockUser(widget.peerId, widget.peerName);
+              if (mounted) {
+                Navigator.pop(context); // fermer dialog
+                Navigator.pop(context); // quitter chat
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Utilisateur bloqué.')));
+              }
+            },
+            child: const Text("Bloquer", style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      )
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Row(
-          children: [
-            Container(
-              padding: _peerActiveBorder != 'none' ? const EdgeInsets.all(2) : EdgeInsets.zero,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: _getBorderGradient(_peerActiveBorder),
+        title: GestureDetector(
+          onTap: _showUserProfile,
+          child: Row(
+            children: [
+              Container(
+                padding: _peerActiveBorder != 'none' ? const EdgeInsets.all(2) : EdgeInsets.zero,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: _getBorderGradient(_peerActiveBorder),
+                ),
+                child: Hero(
+                  tag: 'chat_header_${widget.peerId}',
+                  child: CircleAvatar(
+                    backgroundColor: Colors.white24,
+                    radius: 16,
+                    child: _peerAvatarBase64 != null
+                        ? ClipOval(child: Image.memory(base64Decode(_peerAvatarBase64!), width: 32, height: 32, fit: BoxFit.cover))
+                        : const Icon(Icons.person, color: Colors.white, size: 16),
+                  ),
+                ),
               ),
-              child: CircleAvatar(
-                backgroundColor: Colors.white24,
-                radius: 16,
-                child: _peerAvatarBase64 != null
-                    ? ClipOval(child: Image.memory(base64Decode(_peerAvatarBase64!), width: 32, height: 32, fit: BoxFit.cover))
-                    : const Icon(Icons.person, color: Colors.white, size: 16),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Text(widget.peerName),
-          ],
+              const SizedBox(width: 10),
+              Text(widget.peerName),
+            ],
+          ),
         ),
         actions: [
           IconButton(
@@ -331,6 +561,17 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                 ),
               );
             },
+          ),
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert),
+            onSelected: (value) {
+              if (value == 'report') _showReportDialog();
+              if (value == 'block') _showBlockDialog();
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(value: 'report', child: Text('Signaler')),
+              const PopupMenuItem(value: 'block', child: Text('Bloquer', style: TextStyle(color: Colors.red))),
+            ],
           ),
         ],
       ),
@@ -601,15 +842,6 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                   IconButton(
                     icon: Icon(Icons.add_circle, color: Theme.of(context).colorScheme.primary), 
                     onPressed: _showAttachmentMenu,
-                  ),
-                  IconButton(
-                    icon: Icon(_isEphemeralMode ? Icons.visibility_off : Icons.visibility, color: _isEphemeralMode ? Colors.purpleAccent : Colors.grey),
-                    onPressed: () {
-                      setState(() {
-                        _isEphemeralMode = !_isEphemeralMode;
-                      });
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(_isEphemeralMode ? 'Mode Fantôme activé 👻' : 'Mode normal activé'), duration: const Duration(seconds: 1)));
-                    },
                   ),
                   Expanded(
                     child: TextField(

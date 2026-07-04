@@ -28,9 +28,16 @@ class ChatService {
     final chatDoc = await _firestore.collection('chats').doc(chatId).get();
     
     if (!chatDoc.exists) {
+      // Get my actual name to avoid the "Moi" bug for the recipient
+      String myName = "Utilisateur";
+      final myDoc = await _firestore.collection('users').doc(currentUid).get();
+      if (myDoc.exists) {
+        myName = myDoc.data()?['name'] ?? "Utilisateur";
+      }
+
       await _firestore.collection('chats').doc(chatId).set({
         'users': ids,
-        'user_$currentUid': 'Moi', // Idéalement le vrai nom, mais on simplifie ici
+        'user_$currentUid': myName,
         'user_$peerUid': peerName,
         'lastMessage': '',
         'lastMessageTime': FieldValue.serverTimestamp(),

@@ -103,18 +103,20 @@ void onStart(ServiceInstance service) async {
     );
 
     proximity.stopAll();
-    await proximity.startAdvertising(uid);
-    await proximity.startDiscovery((endpointId, peerUid) async {
-      await PlazaService().registerEncounter(peerUid);
-      // Notification Push Locale
+    
+    // Callback quand on sauvegarde avec succès un profil localement
+    void onEncounterSaved(String peerName) {
       flutterLocalNotificationsPlugin.show(
-        id: peerUid.hashCode,
+        id: peerName.hashCode,
         title: 'Rencontre StreetPass ! 🌟',
-        body: 'Vous avez croisé quelqu\'un ! Regardez votre Place.',
+        body: 'Vous avez croisé $peerName ! Regardez votre Place.',
         notificationDetails: const NotificationDetails(
           android: AndroidNotificationDetails('streetpass_alerts', 'Rencontres', importance: Importance.high),
         ),
       );
-    }, (id) {});
+    }
+
+    await proximity.startAdvertising(uid, onEncounterSaved);
+    await proximity.startDiscovery(uid, onEncounterSaved);
   });
 }
