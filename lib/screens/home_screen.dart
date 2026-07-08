@@ -195,7 +195,7 @@ class _HomeScreenState extends State<HomeScreen> {
             borderRadius: BorderRadius.circular(30),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.08),
+                color: Colors.black.withValues(alpha: 0.08),
                 blurRadius: 20,
                 offset: const Offset(0, 10),
               ),
@@ -228,7 +228,7 @@ class _HomeScreenState extends State<HomeScreen> {
         curve: Curves.easeOutCubic,
         padding: EdgeInsets.symmetric(horizontal: isSelected ? 16 : 12, vertical: 12),
         decoration: BoxDecoration(
-          color: isSelected ? theme.primaryColor.withOpacity(0.15) : Colors.transparent,
+          color: isSelected ? theme.primaryColor.withValues(alpha: 0.15) : Colors.transparent,
           borderRadius: BorderRadius.circular(20),
         ),
         child: AnimatedSize(

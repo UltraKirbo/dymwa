@@ -1,0 +1,7 @@
+Exemple de nom de fichier :
+mouth_smile_walk.png
+
+Règles :
+- Remplace 'smile' par le type de bouche.
+- Assure-toi que la grille fait la même taille exacte que l'image de base.
+- Tu peux supprimer ce fichier texte une fois tes vraies images importées !

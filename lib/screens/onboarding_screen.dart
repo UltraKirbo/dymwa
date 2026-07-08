@@ -346,7 +346,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 label: Text(hobby),
                 selected: isSelected,
                 onSelected: (_) => _onHobbyToggle(hobby),
-                selectedColor: colors.primary.withOpacity(0.3),
+                selectedColor: colors.primary.withValues(alpha: 0.3),
                 checkmarkColor: colors.primary,
               );
             }).toList(),

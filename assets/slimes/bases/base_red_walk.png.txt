@@ -1,0 +1,7 @@
+Exemple de nom de fichier :
+base_red_walk.png
+
+Règles :
+- Remplace la couleur par la couleur du slime (blue, green, etc).
+- Assure-toi que l'image est une grille contenant toutes tes frames pour la marche (walk).
+- Tu peux supprimer ce fichier texte une fois tes vraies images importées !

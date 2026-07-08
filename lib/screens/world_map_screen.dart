@@ -96,8 +96,8 @@ class _WorldMapScreenState extends State<WorldMapScreen> {
                 padding: const EdgeInsets.all(24),
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  color: Theme.of(context).primaryColor.withOpacity(0.1),
-                  border: Border(bottom: BorderSide(color: Theme.of(context).primaryColor.withOpacity(0.2))),
+                  color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
+                  border: Border(bottom: BorderSide(color: Theme.of(context).primaryColor.withValues(alpha: 0.2))),
                 ),
                 child: Column(
                   children: [

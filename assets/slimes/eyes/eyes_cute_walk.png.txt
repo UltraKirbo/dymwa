@@ -1,0 +1,7 @@
+Exemple de nom de fichier :
+eyes_cute_walk.png
+
+Règles :
+- Remplace 'cute' par le type d'yeux (angry, sleepy, etc).
+- Assure-toi que la grille fait la même taille exacte que l'image de base.
+- Tu peux supprimer ce fichier texte une fois tes vraies images importées !

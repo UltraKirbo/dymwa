@@ -17,7 +17,7 @@ class AppTheme {
   // Ombre très légère et diffuse pour les cartes et bulles
   static final List<BoxShadow> softShadow = [
     BoxShadow(
-      color: Colors.black.withOpacity(0.04), // Très transparent
+      color: Colors.black.withValues(alpha: 0.04), // Très transparent
       blurRadius: 10,
       offset: const Offset(0, 4),
     ),

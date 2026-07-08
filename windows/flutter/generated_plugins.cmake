@@ -10,6 +10,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   firebase_core
   firebase_storage
   flutter_webrtc
+  geolocator_windows
   permission_handler_windows
   record_windows
 )

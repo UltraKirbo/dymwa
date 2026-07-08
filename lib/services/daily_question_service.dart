@@ -96,13 +96,13 @@ class DailyQuestionService {
         .snapshots()
         .map((snapshot) {
            var docs = snapshot.docs.where((doc) {
-             final data = doc.data() as Map<String, dynamic>;
+             final data = doc.data();
              return uids.contains(data['uid']);
            }).toList();
            
            docs.sort((a, b) {
-             final tA = (a.data() as Map<String, dynamic>)['timestamp'] as Timestamp?;
-             final tB = (b.data() as Map<String, dynamic>)['timestamp'] as Timestamp?;
+             final tA = a.data()['timestamp'] as Timestamp?;
+             final tB = b.data()['timestamp'] as Timestamp?;
              if (tA == null || tB == null) return 0;
              return tB.compareTo(tA); // Tri décroissant (plus récent au plus ancien)
            });

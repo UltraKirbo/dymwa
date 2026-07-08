@@ -47,9 +47,9 @@ class _ThreadScreenState extends State<ThreadScreen> {
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: Theme.of(context).primaryColor.withOpacity(0.05),
+              color: Theme.of(context).primaryColor.withValues(alpha: 0.05),
               border: Border(
-                bottom: BorderSide(color: Colors.grey.withOpacity(0.2), width: 1),
+                bottom: BorderSide(color: Colors.grey.withValues(alpha: 0.2), width: 1),
               ),
             ),
             child: Column(
@@ -121,7 +121,7 @@ class _ThreadScreenState extends State<ThreadScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                       decoration: BoxDecoration(
                         border: Border(
-                          bottom: BorderSide(color: Colors.grey.withOpacity(0.1), width: 1),
+                          bottom: BorderSide(color: Colors.grey.withValues(alpha: 0.1), width: 1),
                         ),
                       ),
                       child: Row(
@@ -169,7 +169,7 @@ class _ThreadScreenState extends State<ThreadScreen> {
                 color: Theme.of(context).colorScheme.surface,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withValues(alpha: 0.05),
                     offset: const Offset(0, -4),
                     blurRadius: 10,
                   ),
@@ -187,7 +187,7 @@ class _ThreadScreenState extends State<ThreadScreen> {
                           borderSide: BorderSide.none,
                         ),
                         filled: true,
-                        fillColor: Colors.grey.withOpacity(0.1),
+                        fillColor: Colors.grey.withValues(alpha: 0.1),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                       ),
                     ),

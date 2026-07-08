@@ -121,7 +121,7 @@ class _CallScreenState extends State<CallScreen> with SingleTickerProviderStateM
             const SizedBox(height: 50),
             Text(
               "Appel en cours...",
-              style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 16),
+              style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 16),
             ),
             const SizedBox(height: 10),
             Text(
@@ -144,7 +144,7 @@ class _CallScreenState extends State<CallScreen> with SingleTickerProviderStateM
                       height: 150 + (_pulseController.value * 30),
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: Theme.of(context).primaryColor.withOpacity(0.3 - (_pulseController.value * 0.2)),
+                        color: Theme.of(context).primaryColor.withValues(alpha: 0.3 - (_pulseController.value * 0.2)),
                       ),
                       child: Center(
                         child: CircleAvatar(

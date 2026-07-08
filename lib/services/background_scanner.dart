@@ -7,7 +7,6 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'proximity_service.dart';
-import 'plaza_service.dart';
 import 'notification_service.dart';
 
 Future<void> initializeBackgroundService() async {

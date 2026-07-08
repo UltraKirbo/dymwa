@@ -27,9 +27,8 @@ class ConnectFourWidget extends StatelessWidget {
     bool isMyTurn = (currentTurn == currentUid) && winner.isEmpty;
     bool iAmPlayer1 = (currentUid == player1);
     
-    // Déterminer la couleur de mon jeton pour l'affichage
-    Color myColor = iAmPlayer1 ? Colors.red : Colors.amber;
     
+
     String statusText;
     if (winner.isNotEmpty) {
       if (winner == 'draw') {

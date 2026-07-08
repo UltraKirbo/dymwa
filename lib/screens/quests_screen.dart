@@ -91,7 +91,7 @@ class QuestsScreen extends StatelessWidget {
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [primaryColor, primaryColor.withOpacity(0.7)],
+                    colors: [primaryColor, primaryColor.withValues(alpha: 0.7)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -146,7 +146,7 @@ class QuestsScreen extends StatelessWidget {
                 child: Container(
                   height: 45,
                   decoration: BoxDecoration(
-                    color: Colors.grey.withOpacity(0.1),
+                    color: Colors.grey.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(25.0),
                   ),
                   child: TabBar(
@@ -181,8 +181,8 @@ class QuestsScreen extends StatelessWidget {
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
                             color: dailyBonusClaimed 
-                              ? Colors.amber.withOpacity(0.2) 
-                              : Colors.grey.withOpacity(0.05),
+                              ? Colors.amber.withValues(alpha: 0.2) 
+                              : Colors.grey.withValues(alpha: 0.05),
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
                               color: dailyBonusClaimed ? Colors.amber : Colors.transparent,
@@ -310,7 +310,7 @@ class QuestsScreen extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: isCompleted ? primaryColor : primaryColor.withOpacity(0.1),
+                    color: isCompleted ? primaryColor : primaryColor.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(icon, color: isCompleted ? Colors.white : primaryColor, size: 28),
@@ -329,7 +329,7 @@ class QuestsScreen extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: primaryColor.withOpacity(0.1),
+                    color: primaryColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Row(
@@ -352,7 +352,7 @@ class QuestsScreen extends StatelessWidget {
                       Container(
                         height: 12,
                         decoration: BoxDecoration(
-                          color: Colors.grey.withOpacity(0.15),
+                          color: Colors.grey.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(10),
                         ),
                       ),
@@ -363,7 +363,7 @@ class QuestsScreen extends StatelessWidget {
                         width: percentage > 1 ? double.infinity : (MediaQuery.of(context).size.width - 72) * percentage, // 72 = margins
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
-                            colors: [primaryColor.withOpacity(0.7), primaryColor],
+                            colors: [primaryColor.withValues(alpha: 0.7), primaryColor],
                           ),
                           borderRadius: BorderRadius.circular(10),
                         ),

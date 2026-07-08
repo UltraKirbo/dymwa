@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../services/proximity_service.dart';
 import '../services/local_storage_service.dart';
@@ -12,8 +11,7 @@ import 'chat_detail_screen.dart';
 import 'world_map_screen.dart';
 import 'puzzle_screen.dart';
 import '../theme.dart';
-import '../services/gamification_service.dart';
-import '../widgets/full_screen_image_viewer.dart';
+import '../widgets/slime_avatar.dart';
 import 'dart:convert';
 import 'dart:math';
 
@@ -103,13 +101,25 @@ class _PlazaScreenState extends State<PlazaScreen> {
       // Pour le mode test, on simule l'arrivée de données P2P
       final mockData1 = jsonEncode({
         'uid': 'mock_garcon', 'name': 'Lucas (Test)', 'gender': 'Garçon', 'country': 'es', 'greeting': 'Hola !', 'rpgClass': 'Guerrier',
+        'slimeConfig': {'color': 'red', 'eyes': 1, 'mouth': 5, 'accessory': 5},
       });
       final mockData2 = jsonEncode({
         'uid': 'mock_fille', 'name': 'Emma (Test)', 'gender': 'Fille', 'country': 'it', 'greeting': 'Ciao !', 'rpgClass': 'Mage',
+        'slimeConfig': {'color': 'cyan', 'eyes': 2, 'mouth': 3, 'accessory': 4},
+      });
+      final mockData3 = jsonEncode({
+        'uid': 'mock_ninja', 'name': 'Yuki (Test)', 'gender': 'Garçon', 'country': 'jp', 'greeting': 'Konichiwa !', 'rpgClass': 'Voleur',
+        'slimeConfig': {'color': 'black', 'eyes': 0, 'mouth': 0, 'accessory': 6},
+      });
+      final mockData4 = jsonEncode({
+        'uid': 'mock_king', 'name': 'Arthur (Test)', 'gender': 'Garçon', 'country': 'gb', 'greeting': 'Hello mate!', 'rpgClass': 'Paladin',
+        'slimeConfig': {'color': 'yellow', 'eyes': 4, 'mouth': 4, 'accessory': 1},
       });
       
       await LocalStorageService.saveEncounter(mockData1);
       await LocalStorageService.saveEncounter(mockData2);
+      await LocalStorageService.saveEncounter(mockData3);
+      await LocalStorageService.saveEncounter(mockData4);
       await _loadLocalEncounters();
       
       setState(() => isScanning = false);
@@ -221,7 +231,7 @@ class _PlazaScreenState extends State<PlazaScreen> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.radar, size: 60, color: Theme.of(context).primaryColor.withOpacity(0.5)),
+                          Icon(Icons.radar, size: 60, color: Theme.of(context).primaryColor.withValues(alpha: 0.5)),
                           const SizedBox(height: 16),
                           const Text(
                             "La Place est vide.",
@@ -242,25 +252,19 @@ class _PlazaScreenState extends State<PlazaScreen> {
                     boundaryMargin: EdgeInsets.zero,
                     minScale: 0.3,
                     maxScale: 2.0,
+                    trackpadScrollCausesScale: true,
                     child: Container(
                       width: 1500,
                       height: 1500,
-                      color: Theme.of(context).colorScheme.surface,
-                      child: GridPaper(
-                        color: Theme.of(context).primaryColor.withOpacity(0.1),
-                        divisions: 2,
-                        subdivisions: 4,
+                      child: CustomPaint(
+                        painter: PlazaMapPainter(),
                         child: Stack(
                           children: _localEncounters.map((userData) {
                             String peerUid = userData['uid'] ?? 'unknown';
-                            Random rand = Random(peerUid.hashCode);
-                            double left = rand.nextDouble() * 1300 + 50;
-                            double top = rand.nextDouble() * 1300 + 50;
-                            
-                            return Positioned(
-                              left: left,
-                              top: top,
-                              child: _buildPlazaAvatar(userData),
+                            return WanderingSlime(
+                              key: ValueKey(peerUid),
+                              userData: userData,
+                              onTap: () => _showUserDialog(peerUid, userData),
                             );
                           }).toList(),
                         ),
@@ -281,56 +285,44 @@ class _PlazaScreenState extends State<PlazaScreen> {
     );
   }
 
-  Widget _buildPlazaAvatar(Map<String, dynamic> userData) {
-    final String peerUid = userData['uid'] ?? '';
-    final name = userData['name'] ?? 'Inconnu';
-    final rpgClass = userData['rpgClass'] ?? 'Novice 🔰';
-    final greeting = userData['greeting'] ?? 'Salut !';
-    final avatarBase64 = userData['avatarBase64'];
-    final activeBorder = userData['activeBorder'] ?? 'none';
-    final activeTitle = userData['activeTitle'] ?? '';
-
-    return GestureDetector(
-      onTap: () => _showUserDialog(peerUid, name, greeting, avatarBase64, activeBorder, activeTitle),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            margin: const EdgeInsets.only(bottom: 4),
-            constraints: const BoxConstraints(maxWidth: 120),
-            decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.6),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Text('"$greeting"', style: const TextStyle(color: Colors.white, fontSize: 10), maxLines: 2, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center),
-          ),
-          Container(
-            padding: activeBorder != 'none' ? const EdgeInsets.all(3) : EdgeInsets.zero,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: GamificationService.getBorderGradient(activeBorder),
-            ),
-            child: CircleAvatar(
-              radius: 30,
-              backgroundColor: Colors.grey.shade800,
-              child: avatarBase64 != null && avatarBase64.isNotEmpty
-                  ? ClipOval(child: Image.memory(base64Decode(avatarBase64), width: 60, height: 60, fit: BoxFit.cover))
-                  : const Icon(Icons.person, size: 30, color: Colors.white),
-            ),
-          ),
-          const SizedBox(height: 4),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            decoration: BoxDecoration(color: Theme.of(context).primaryColor, borderRadius: BorderRadius.circular(8)),
-            child: Text(name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
-          ),
-        ],
-      ),
-    );
+  String _getFlag(String countryCode) {
+    if (countryCode.length != 2) return "🌍";
+    int flagOffset = 0x1F1E6;
+    int asciiOffset = 0x41;
+    String country = countryCode.toUpperCase();
+    int firstChar = country.codeUnitAt(0) - asciiOffset + flagOffset;
+    int secondChar = country.codeUnitAt(1) - asciiOffset + flagOffset;
+    return String.fromCharCode(firstChar) + String.fromCharCode(secondChar);
   }
 
-  void _showUserDialog(String peerUid, String name, String greeting, String? avatarBase64, String activeBorder, String activeTitle) {
+  void _showUserDialog(String peerUid, Map<String, dynamic> userData) async {
+    final myUid = FirebaseAuth.instance.currentUser?.uid;
+    String metLocation = 'Lieu inconnu';
+    String metAtString = 'Inconnue';
+
+    if (myUid != null) {
+      try {
+        final doc = await FirebaseFirestore.instance.collection('users').doc(myUid).collection('plaza').doc(peerUid).get();
+        if (doc.exists) {
+          metLocation = doc.data()?['metLocation'] ?? 'Lieu inconnu';
+          final ts = doc.data()?['metAt'];
+          if (ts != null) {
+            DateTime dt = ts.toDate();
+            metAtString = "${dt.day.toString().padLeft(2,'0')}/${dt.month.toString().padLeft(2,'0')}/${dt.year}";
+          }
+        }
+      } catch (e) {}
+    }
+
+    if (!mounted) return;
+
+    final name = userData['name'] ?? 'Inconnu';
+    final greeting = userData['greeting'] ?? 'Salut !';
+    final activeTitle = userData['activeTitle'] ?? '';
+    final country = userData['country'] ?? 'fr';
+    final rpgClass = userData['rpgClass'] ?? 'Novice';
+    final config = userData['slimeConfig'] ?? {};
+
     showDialog(
       context: context,
       builder: (_) => Dialog(
@@ -354,41 +346,37 @@ class _PlazaScreenState extends State<PlazaScreen> {
                   ],
                 ),
               ),
-              GestureDetector(
-                onTap: () {
-                  if (avatarBase64 != null) {
-                    Navigator.push(context, MaterialPageRoute(
-                      builder: (_) => FullScreenImageViewer(base64Image: avatarBase64, tag: 'plaza_avatar_$peerUid'),
-                    ));
-                  }
-                },
-                child: Container(
-                  padding: activeBorder != 'none' ? const EdgeInsets.all(4) : EdgeInsets.zero,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: GamificationService.getBorderGradient(activeBorder),
-                  ),
-                  child: Hero(
-                    tag: 'plaza_avatar_$peerUid',
-                    child: CircleAvatar(
-                      radius: 50,
-                      backgroundColor: Colors.grey.shade800,
-                      child: avatarBase64 != null
-                          ? ClipOval(child: Image.memory(base64Decode(avatarBase64), width: 100, height: 100, fit: BoxFit.cover))
-                          : const Icon(Icons.person, size: 50, color: Colors.white),
-                    ),
-                  ),
-                ),
-              ),
+              SlimeAvatar(config: config, size: 120),
               const SizedBox(height: 16),
-              Text(name, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(_getFlag(country), style: const TextStyle(fontSize: 24)),
+                  const SizedBox(width: 8),
+                  Text(name, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                ],
+              ),
               if (activeTitle.isNotEmpty)
                 Text(activeTitle, style: const TextStyle(color: Colors.orange, fontWeight: FontWeight.bold, fontStyle: FontStyle.italic)),
+              Text(rpgClass, style: const TextStyle(color: Colors.grey, fontWeight: FontWeight.w600)),
               const SizedBox(height: 16),
               Container(
                 padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(color: Colors.grey.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+                decoration: BoxDecoration(color: Colors.grey.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
                 child: Text('"$greeting"', style: const TextStyle(fontStyle: FontStyle.italic), textAlign: TextAlign.center),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.calendar_today, size: 16, color: Colors.grey),
+                  const SizedBox(width: 4),
+                  Text(metAtString, style: const TextStyle(color: Colors.grey)),
+                  const SizedBox(width: 16),
+                  const Icon(Icons.location_on, size: 16, color: Colors.grey),
+                  const SizedBox(width: 4),
+                  Expanded(child: Text(metLocation, style: const TextStyle(color: Colors.grey), overflow: TextOverflow.ellipsis)),
+                ],
               ),
               const SizedBox(height: 24),
               ElevatedButton.icon(
@@ -482,3 +470,143 @@ class _PlazaScreenState extends State<PlazaScreen> {
     );
   }
 }
+
+class PlazaMapPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    // 1. Herbe de base
+    final grassPaint = Paint()..color = Colors.lightGreen.shade400;
+    canvas.drawRect(Offset.zero & size, grassPaint);
+
+    // 2. Rivière
+    final riverPaint = Paint()..color = Colors.blue.shade300..style = PaintingStyle.stroke..strokeWidth = 100..strokeCap = StrokeCap.round;
+    Path riverPath = Path();
+    riverPath.moveTo(0, size.height * 0.2);
+    riverPath.quadraticBezierTo(size.width * 0.5, size.height * 0.4, size.width * 0.3, size.height * 0.8);
+    riverPath.quadraticBezierTo(size.width * 0.2, size.height * 1.1, size.width * 0.8, size.height);
+    canvas.drawPath(riverPath, riverPaint);
+
+    // 3. Taches d'herbe foncée
+    final darkGrass = Paint()..color = Colors.lightGreen.shade600..style = PaintingStyle.fill;
+    canvas.drawCircle(Offset(size.width * 0.2, size.height * 0.2), 150, darkGrass);
+    canvas.drawCircle(Offset(size.width * 0.8, size.height * 0.5), 200, darkGrass);
+    canvas.drawCircle(Offset(size.width * 0.5, size.height * 0.9), 120, darkGrass);
+    
+    // 4. Chemins en terre
+    final pathPaint = Paint()..color = Colors.brown.shade300.withValues(alpha: 0.5)..style = PaintingStyle.stroke..strokeWidth = 40..strokeCap = StrokeCap.round;
+    canvas.drawLine(Offset(size.width * 0.2, size.height * 0.2), Offset(size.width * 0.5, size.height * 0.5), pathPaint);
+    canvas.drawLine(Offset(size.width * 0.5, size.height * 0.5), Offset(size.width * 0.8, size.height * 0.5), pathPaint);
+    canvas.drawLine(Offset(size.width * 0.5, size.height * 0.5), Offset(size.width * 0.5, size.height * 0.9), pathPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class WanderingSlime extends StatefulWidget {
+  final Map<String, dynamic> userData;
+  final VoidCallback onTap;
+  const WanderingSlime({super.key, required this.userData, required this.onTap});
+
+  @override
+  State<WanderingSlime> createState() => _WanderingSlimeState();
+}
+
+class _WanderingSlimeState extends State<WanderingSlime> with SingleTickerProviderStateMixin {
+  late AnimationController _moveController;
+  late Animation<Offset> _positionAnimation;
+  
+  Offset _currentPos = const Offset(750, 750);
+  Offset _targetPos = const Offset(750, 750);
+  final Random _rand = Random();
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize random start position (avoiding absolute edges)
+    _currentPos = Offset(_rand.nextDouble() * 1300 + 100, _rand.nextDouble() * 1300 + 100);
+    _targetPos = _currentPos;
+
+    _moveController = AnimationController(vsync: this, duration: const Duration(seconds: 5));
+    _moveController.addStatusListener((status) {
+      if (status == AnimationStatus.completed) {
+        Future.delayed(Duration(milliseconds: 1000 + _rand.nextInt(3000)), () {
+          if (mounted) _pickNewDestination();
+        });
+      }
+    });
+    
+    // Démarrage décalé
+    Future.delayed(Duration(milliseconds: _rand.nextInt(2000)), () {
+      if (mounted) _pickNewDestination();
+    });
+  }
+
+  void _pickNewDestination() {
+    _currentPos = _targetPos;
+    // Déplacement aléatoire dans un rayon de 300 à 600 px
+    double dx = (_rand.nextDouble() - 0.5) * 800;
+    double dy = (_rand.nextDouble() - 0.5) * 800;
+    
+    double newX = (_currentPos.dx + dx).clamp(100, 1400);
+    double newY = (_currentPos.dy + dy).clamp(100, 1400);
+    _targetPos = Offset(newX, newY);
+    
+    double distance = (_targetPos - _currentPos).distance;
+    if (distance < 50) return; // Ignore if too close
+    
+    int durationMs = (distance * 15).toInt().clamp(2000, 10000); // Vitesse : 15ms par pixel
+    
+    _moveController.duration = Duration(milliseconds: durationMs);
+    _positionAnimation = Tween<Offset>(begin: _currentPos, end: _targetPos).animate(CurvedAnimation(parent: _moveController, curve: Curves.easeInOut));
+    
+    _moveController.forward(from: 0.0);
+  }
+
+  @override
+  void dispose() {
+    _moveController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final name = widget.userData['name'] ?? 'Inconnu';
+    final config = widget.userData['slimeConfig'] ?? {};
+    final greeting = widget.userData['greeting'] ?? '';
+
+    return AnimatedBuilder(
+      animation: _moveController,
+      builder: (context, child) {
+        final pos = _moveController.isAnimating ? _positionAnimation.value : _currentPos;
+        return Positioned(
+          left: pos.dx,
+          top: pos.dy,
+          child: GestureDetector(
+            onTap: widget.onTap,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (greeting.isNotEmpty)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    margin: const EdgeInsets.only(bottom: 4),
+                    decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.9), borderRadius: BorderRadius.circular(12)),
+                    child: Text(greeting, style: const TextStyle(color: Colors.black, fontSize: 10, fontStyle: FontStyle.italic)),
+                  ),
+                SlimeAvatar(config: config, size: 80),
+                const SizedBox(height: 4),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(8)),
+                  child: Text(name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+

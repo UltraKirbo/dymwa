@@ -115,7 +115,7 @@ class _AuthScreenState extends State<AuthScreen> {
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [colors.primary.withOpacity(0.1), colors.surface],
+                colors: [colors.primary.withValues(alpha: 0.1), colors.surface],
               )
             ),
           ),
@@ -160,7 +160,7 @@ class _AuthScreenState extends State<AuthScreen> {
                           onPressed: _showLoginBottomSheet,
                           style: OutlinedButton.styleFrom(
                             foregroundColor: colors.primary,
-                            side: BorderSide(color: colors.primary.withOpacity(0.5), width: 2),
+                            side: BorderSide(color: colors.primary.withValues(alpha: 0.5), width: 2),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                           ),
                           child: const Text('J\'ai déjà un compte', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),

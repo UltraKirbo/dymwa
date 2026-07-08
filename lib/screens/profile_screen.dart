@@ -8,6 +8,7 @@ import '../utils/rpg_utils.dart';
 import '../services/step_service.dart';
 import 'settings_screen.dart';
 import '../widgets/full_screen_image_viewer.dart';
+import 'slime_maker_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -422,6 +423,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ],
           ),
           const SizedBox(height: 16),
+          ListTile(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            tileColor: Theme.of(context).colorScheme.surface,
+            leading: const Icon(Icons.face, color: Colors.blueAccent),
+            title: const Text('Personnaliser mon Slime'),
+            subtitle: const Text('Crée ton avatar Slime pixelisé'),
+            trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+            onTap: () {
+              Navigator.push(context, MaterialPageRoute(builder: (_) => const SlimeMakerScreen()));
+            },
+          ),
+          const SizedBox(height: 12),
           ListTile(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             tileColor: Theme.of(context).colorScheme.surface,

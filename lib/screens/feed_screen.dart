@@ -58,7 +58,7 @@ class _FeedScreenState extends State<FeedScreen> {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
       decoration: BoxDecoration(
-        color: Theme.of(context).primaryColor.withOpacity(0.1),
+        color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
         borderRadius: const BorderRadius.only(
           bottomLeft: Radius.circular(40),
           bottomRight: Radius.circular(40),
@@ -208,10 +208,10 @@ class _FeedScreenState extends State<FeedScreen> {
                     decoration: BoxDecoration(
                       color: Theme.of(context).colorScheme.surface,
                       borderRadius: BorderRadius.circular(20),
-                      border: isMe ? Border.all(color: Theme.of(context).primaryColor.withOpacity(0.3), width: 2) : null,
+                      border: isMe ? Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.3), width: 2) : null,
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
+                          color: Colors.black.withValues(alpha: 0.05),
                           blurRadius: 10,
                           offset: const Offset(0, 5),
                         ),
@@ -224,7 +224,7 @@ class _FeedScreenState extends State<FeedScreen> {
                           children: [
                             CircleAvatar(
                               radius: 18,
-                              backgroundColor: Theme.of(context).primaryColor.withOpacity(0.2),
+                              backgroundColor: Theme.of(context).primaryColor.withValues(alpha: 0.2),
                               child: Text(
                                 data['name'][0].toUpperCase(),
                                 style: TextStyle(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold),

@@ -44,8 +44,8 @@ class ShopScreen extends StatelessWidget {
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(vertical: 24),
                   decoration: BoxDecoration(
-                    color: primaryColor.withOpacity(0.05),
-                    border: Border(bottom: BorderSide(color: primaryColor.withOpacity(0.1))),
+                    color: primaryColor.withValues(alpha: 0.05),
+                    border: Border(bottom: BorderSide(color: primaryColor.withValues(alpha: 0.1))),
                   ),
                   child: Column(
                     children: [
@@ -280,7 +280,7 @@ class ShopScreen extends StatelessWidget {
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(vertical: 8),
-                      decoration: BoxDecoration(color: primaryColor.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+                      decoration: BoxDecoration(color: primaryColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
                       child: Center(child: Text('Actif', style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold))),
                     )
                   else if (isUnlocked)

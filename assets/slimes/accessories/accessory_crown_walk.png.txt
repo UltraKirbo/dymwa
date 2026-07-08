@@ -1,0 +1,7 @@
+Exemple de nom de fichier :
+accessory_crown_walk.png
+
+Règles :
+- Remplace 'crown' par le nom de l'accessoire (cap, halo, etc).
+- Assure-toi que la grille fait la même taille exacte que l'image de base, pour que la superposition soit parfaite !
+- Tu peux supprimer ce fichier texte une fois tes vraies images importées !

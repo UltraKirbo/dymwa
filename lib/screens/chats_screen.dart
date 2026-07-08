@@ -22,7 +22,7 @@ class ChatsScreen extends StatelessWidget {
             child: Container(
               height: 45,
               decoration: BoxDecoration(
-                color: Colors.grey.withOpacity(0.1),
+                color: Colors.grey.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(25.0),
               ),
               child: TabBar(
@@ -111,10 +111,10 @@ class ChatsScreen extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).primaryColor.withOpacity(0.1),
+                      color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(Icons.chat_bubble_outline, size: 80, color: Theme.of(context).primaryColor.withOpacity(0.5)),
+                    child: Icon(Icons.chat_bubble_outline, size: 80, color: Theme.of(context).primaryColor.withValues(alpha: 0.5)),
                   ),
                   const SizedBox(height: 24),
                   const Text(
@@ -216,10 +216,10 @@ class ChatsScreen extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).primaryColor.withOpacity(0.1),
+                      color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(Icons.people_outline, size: 80, color: Theme.of(context).primaryColor.withOpacity(0.5)),
+                    child: Icon(Icons.people_outline, size: 80, color: Theme.of(context).primaryColor.withValues(alpha: 0.5)),
                   ),
                   const SizedBox(height: 24),
                   const Text(
@@ -266,7 +266,7 @@ class ChatsScreen extends StatelessWidget {
                 title: Text(peerName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                 trailing: Container(
                   decoration: BoxDecoration(
-                    color: Theme.of(context).primaryColor.withOpacity(0.1),
+                    color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
                   child: IconButton(

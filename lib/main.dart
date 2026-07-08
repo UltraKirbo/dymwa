@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart' hide Consumer;
+import 'package:easy_localization/easy_localization.dart';
 import 'providers/theme_provider.dart';
 import 'theme.dart';
 import 'screens/splash_screen.dart';
@@ -15,6 +17,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await EasyLocalization.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
@@ -34,11 +37,18 @@ void main() async {
   await ModerationService().init(); // Initialiser la modération
   
   runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => ThemeProvider()),
-      ],
-      child: const DymwaApp(),
+    ProviderScope(
+      child: EasyLocalization(
+        supportedLocales: const [Locale('fr'), Locale('en')],
+        path: 'assets/translations',
+        fallbackLocale: const Locale('fr'),
+        child: MultiProvider(
+          providers: [
+            ChangeNotifierProvider(create: (_) => ThemeProvider()),
+          ],
+          child: const DymwaApp(),
+        ),
+      ),
     ),
   );
 }
@@ -53,6 +63,9 @@ class DymwaApp extends StatelessWidget {
         return MaterialApp(
           title: 'dymwa',
           debugShowCheckedModeBanner: false,
+          localizationsDelegates: context.localizationDelegates,
+          supportedLocales: context.supportedLocales,
+          locale: context.locale,
           theme: themeProvider.getThemeData(context, isDark: false),
           darkTheme: themeProvider.getThemeData(context, isDark: true),
           themeMode: themeProvider.themeMode, // S'adapte selon le choix de l'utilisateur

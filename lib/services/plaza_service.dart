@@ -1,10 +1,44 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'dart:math';
+
+import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
 
 class PlazaService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final String uid = FirebaseAuth.instance.currentUser?.uid ?? '';
+
+  Future<String> _getLocationSilently() async {
+    try {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) return 'Lieu inconnu';
+
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
+        return 'Lieu inconnu';
+      }
+
+      Position position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.low,
+          timeLimit: Duration(seconds: 5),
+        ),
+      );
+
+      List<Placemark> placemarks = await placemarkFromCoordinates(position.latitude, position.longitude);
+      if (placemarks.isNotEmpty) {
+        Placemark place = placemarks.first;
+        String city = place.locality ?? place.subAdministrativeArea ?? '';
+        String country = place.country ?? '';
+        if (city.isNotEmpty && country.isNotEmpty) return '$city, $country';
+        if (city.isNotEmpty) return city;
+        if (country.isNotEmpty) return country;
+      }
+    } catch (e) {
+      // Échec silencieux
+    }
+    return 'Lieu inconnu';
+  }
 
   Future<void> registerEncounter(String peerUid) async {
     if (uid.isEmpty || peerUid == uid) return;
@@ -41,9 +75,12 @@ class PlazaService {
 
     // Si on ne l'a jamais rencontré
     if (!plazaDoc.exists) {
+      String locationName = await _getLocationSilently();
+
       // 1. L'ajouter à la place
       await plazaRef.set({
         'metAt': FieldValue.serverTimestamp(),
+        'metLocation': locationName,
         'uid': peerUid,
       });
 

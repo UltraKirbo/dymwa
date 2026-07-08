@@ -25,6 +25,7 @@ class LocalStorageService {
       'rpgClass': data['rpgClass'] ?? 'Novice',
       'hobbies': data['hobbies'] ?? [],
       'country': data['country'] ?? 'fr',
+      'slimeConfig': data['slimeConfig'],
       'timestamp': DateTime.now().millisecondsSinceEpoch,
     };
     

@@ -117,30 +117,42 @@ class _SlimeMakerScreenState extends State<SlimeMakerScreen> {
                     _buildColorButton('purple', Colors.purple),
                     _buildColorButton('pink', Colors.pink),
                     _buildColorButton('black', Colors.grey.shade800),
+                    _buildColorButton('cyan', Colors.cyan),
+                    _buildColorButton('orange', Colors.orange),
+                    _buildColorButton('brown', Colors.brown),
+                    _buildColorButton('white', Colors.grey.shade300),
                   ],
                 ),
                 const SizedBox(height: 24),
                 
                 const Text('Yeux', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
                   children: [
                     _buildOptionButton('Normaux', _eyes == 0, () => setState(() => _eyes = 0)),
                     _buildOptionButton('Fâchés', _eyes == 1, () => setState(() => _eyes = 1)),
                     _buildOptionButton('Mignons', _eyes == 2, () => setState(() => _eyes = 2)),
+                    _buildOptionButton('Dodo', _eyes == 3, () => setState(() => _eyes = 3)),
+                    _buildOptionButton('Coeurs', _eyes == 4, () => setState(() => _eyes = 4)),
+                    _buildOptionButton('K.O.', _eyes == 5, () => setState(() => _eyes = 5)),
                   ],
                 ),
                 const SizedBox(height: 24),
                 
                 const Text('Bouche', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
                   children: [
                     _buildOptionButton('Sourire', _mouth == 0, () => setState(() => _mouth = 0)),
                     _buildOptionButton('Triste', _mouth == 1, () => setState(() => _mouth = 1)),
                     _buildOptionButton('Surpris', _mouth == 2, () => setState(() => _mouth = 2)),
+                    _buildOptionButton('Chat', _mouth == 3, () => setState(() => _mouth = 3)),
+                    _buildOptionButton('Langue', _mouth == 4, () => setState(() => _mouth = 4)),
+                    _buildOptionButton('Vampire', _mouth == 5, () => setState(() => _mouth = 5)),
                   ],
                 ),
                 const SizedBox(height: 24),
@@ -155,6 +167,9 @@ class _SlimeMakerScreenState extends State<SlimeMakerScreen> {
                     _buildOptionButton('Couronne', _accessory == 1, () => setState(() => _accessory = 1)),
                     _buildOptionButton('Casquette', _accessory == 2, () => setState(() => _accessory = 2)),
                     _buildOptionButton('Lunettes', _accessory == 3, () => setState(() => _accessory = 3)),
+                    _buildOptionButton('Auréole', _accessory == 4, () => setState(() => _accessory = 4)),
+                    _buildOptionButton('Cornes', _accessory == 5, () => setState(() => _accessory = 5)),
+                    _buildOptionButton('Casque', _accessory == 6, () => setState(() => _accessory = 6)),
                   ],
                 ),
                 const SizedBox(height: 40),
@@ -177,7 +192,7 @@ class _SlimeMakerScreenState extends State<SlimeMakerScreen> {
           color: colorValue,
           shape: BoxShape.circle,
           border: Border.all(color: isSelected ? Colors.white : Colors.transparent, width: 3),
-          boxShadow: isSelected ? [BoxShadow(color: colorValue.withOpacity(0.5), blurRadius: 8, spreadRadius: 2)] : [],
+          boxShadow: isSelected ? [BoxShadow(color: colorValue.withValues(alpha: 0.5), blurRadius: 8, spreadRadius: 2)] : [],
         ),
       ),
     );
@@ -189,7 +204,7 @@ class _SlimeMakerScreenState extends State<SlimeMakerScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: isSelected ? Theme.of(context).primaryColor : Colors.grey.withOpacity(0.1),
+          color: isSelected ? Theme.of(context).primaryColor : Colors.grey.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Text(

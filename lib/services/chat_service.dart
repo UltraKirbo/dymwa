@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:convert';
 import 'gamification_service.dart';
-import 'notification_service.dart';
+import '../models/message_model.dart';
 
 class ChatService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -47,13 +47,16 @@ class ChatService {
   }
 
   // Récupérer les messages d'une conversation
-  Stream<QuerySnapshot> getMessages(String chatId) {
+  Stream<List<Message>> getMessages(String chatId) {
     return _firestore
         .collection('chats')
         .doc(chatId)
         .collection('messages')
         .orderBy('timestamp', descending: true)
-        .snapshots();
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => Message.fromMap(doc.id, doc.data()))
+            .toList());
   }
 
   // Envoyer un message texte
