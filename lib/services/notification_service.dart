@@ -13,7 +13,11 @@ class NotificationService {
   Future<void> init() async {
     // 1. Configurer les notifications locales
     const AndroidInitializationSettings androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
-    const InitializationSettings initSettings = InitializationSettings(android: androidSettings);
+    const DarwinInitializationSettings iosSettings = DarwinInitializationSettings();
+    const InitializationSettings initSettings = InitializationSettings(
+      android: androidSettings,
+      iOS: iosSettings,
+    );
     
     await _localNotifications.initialize(
       settings: initSettings,

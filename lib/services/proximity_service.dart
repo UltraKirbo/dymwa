@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:typed_data';
+import 'dart:io';
 import 'package:nearby_connections/nearby_connections.dart';
 import 'local_storage_service.dart';
 
@@ -8,6 +9,10 @@ class ProximityService {
   
   // Démarrer la diffusion
   Future<void> startAdvertising(String myUid, Function(String peerName)? onEncounter) async {
+    if (!Platform.isAndroid) {
+      print('Nearby Connections is only supported on Android. Skipping advertising.');
+      return;
+    }
     try {
       bool a = await Nearby().startAdvertising(
         myUid,
@@ -50,6 +55,10 @@ class ProximityService {
 
   // Démarrer la découverte
   Future<void> startDiscovery(String myUid, Function(String peerName)? onEncounter) async {
+    if (!Platform.isAndroid) {
+      print('Nearby Connections is only supported on Android. Skipping discovery.');
+      return;
+    }
     try {
       bool a = await Nearby().startDiscovery(
         "dymwa_app", // Identifiant de service fixe pour que tout le monde se trouve
@@ -96,9 +105,9 @@ class ProximityService {
   }
 
   void stopAll() {
+    if (!Platform.isAndroid) return;
     Nearby().stopAdvertising();
     Nearby().stopDiscovery();
     Nearby().stopAllEndpoints();
   }
 }
-

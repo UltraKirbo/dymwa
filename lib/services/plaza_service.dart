@@ -25,7 +25,7 @@ class PlazaService {
         ),
       );
 
-      List<Placemark> placemarks = await placemarkFromCoordinates(position.latitude, position.longitude);
+      List<Placemark> placemarks = await Geocoding().placemarkFromCoordinates(position.latitude, position.longitude);
       if (placemarks.isNotEmpty) {
         Placemark place = placemarks.first;
         String city = place.locality ?? place.subAdministrativeArea ?? '';
