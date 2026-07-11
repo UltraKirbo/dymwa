@@ -8,6 +8,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'proximity_service.dart';
 import 'notification_service.dart';
+import 'plaza_service.dart';
 
 Future<void> initializeBackgroundService() async {
   final service = FlutterBackgroundService();
@@ -68,15 +69,12 @@ void onStart(ServiceInstance service) async {
     service.stopSelf();
   });
 
-  ProximityService proximity = ProximityService();
-  
-  // We periodically restart scanning to ensure the OS doesn't kill the BLE scanning.
-  Timer.periodic(const Duration(seconds: 30), (timer) async {
+  // On utilise le GPS toutes les 5 minutes pour le StreetPass Asynchrone
+  Timer.periodic(const Duration(minutes: 5), (timer) async {
     final prefs = await SharedPreferences.getInstance();
     bool isEnabled = prefs.getBool('background_streetpass_enabled') ?? false;
 
     if (!isEnabled) {
-      proximity.stopAll();
       service.stopSelf();
       return;
     }
@@ -90,32 +88,34 @@ void onStart(ServiceInstance service) async {
     flutterLocalNotificationsPlugin.show(
       id: 888,
       title: 'Dymwa StreetPass',
-      body: 'Scan en cours en arrière-plan...',
+      body: 'En attente de rencontres...',
       notificationDetails: const NotificationDetails(
         android: AndroidNotificationDetails(
           'streetpass_background_channel',
           'StreetPass Scanner',
-          icon: 'ic_bg_service_small', // Assurez-vous d'avoir une icône, sinon ça plantera sur certains appareils (on utilise celle par défaut pour l'instant)
+          icon: 'ic_bg_service_small',
           ongoing: true,
         ),
       ),
     );
 
-    proximity.stopAll();
-    
-    // Callback quand on sauvegarde avec succès un profil localement
-    void onEncounterSaved(String peerName) {
-      flutterLocalNotificationsPlugin.show(
-        id: peerName.hashCode,
-        title: 'Rencontre StreetPass ! 🌟',
-        body: 'Vous avez croisé $peerName ! Regardez votre Place.',
-        notificationDetails: const NotificationDetails(
-          android: AndroidNotificationDetails('streetpass_alerts', 'Rencontres', importance: Importance.high),
-        ),
-      );
+    // Recherche de correspondances GPS (Asynchrone)
+    try {
+      final plazaService = PlazaService();
+      List<String> newEncounters = await plazaService.updateLocationAndFindMatches();
+      
+      for (String peerName in newEncounters) {
+        flutterLocalNotificationsPlugin.show(
+          id: peerName.hashCode,
+          title: 'Rencontre StreetPass ! 🌟',
+          body: 'Vous étiez dans la même zone que $peerName !',
+          notificationDetails: const NotificationDetails(
+            android: AndroidNotificationDetails('streetpass_alerts', 'Rencontres', importance: Importance.high),
+          ),
+        );
+      }
+    } catch (e) {
+      // Échec silencieux
     }
-
-    await proximity.startAdvertising(uid, onEncounterSaved);
-    await proximity.startDiscovery(uid, onEncounterSaved);
   });
 }

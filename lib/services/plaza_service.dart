@@ -40,13 +40,13 @@ class PlazaService {
     return 'Lieu inconnu';
   }
 
-  Future<void> registerEncounter(String peerUid) async {
-    if (uid.isEmpty || peerUid == uid) return;
+  Future<String?> registerEncounter(String peerUid) async {
+    if (uid.isEmpty || peerUid == uid) return null;
 
     final myDoc = await _firestore.collection('users').doc(uid).get();
     final peerDoc = await _firestore.collection('users').doc(peerUid).get();
 
-    if (!myDoc.exists || !peerDoc.exists) return;
+    if (!myDoc.exists || !peerDoc.exists) return null;
 
     final myData = myDoc.data()!;
     final peerData = peerDoc.data()!;
@@ -67,7 +67,7 @@ class PlazaService {
 
     if (!iWantThem || !theyWantMe) {
       // Incompatibilité, on ignore silencieusement la rencontre
-      return;
+      return null;
     }
 
     final plazaRef = _firestore.collection('users').doc(uid).collection('plaza').doc(peerUid);
@@ -95,6 +95,62 @@ class PlazaService {
           });
         }
       }
+      return peerData['name'] as String?;
+    }
+    return null;
+  }
+
+  Future<List<String>> updateLocationAndFindMatches() async {
+    if (uid.isEmpty) return [];
+
+    try {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) return [];
+
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
+        return [];
+      }
+
+      Position position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.low,
+          timeLimit: Duration(seconds: 5),
+        ),
+      );
+
+      String gridId = "${position.latitude.toStringAsFixed(3)}_${position.longitude.toStringAsFixed(3)}";
+
+      // Mettre à jour notre position
+      await _firestore.collection('active_locations').doc(uid).set({
+        'gridId': gridId,
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+
+      // Chercher les autres dans la même grille
+      final thirtyMinsAgo = DateTime.now().subtract(const Duration(minutes: 30));
+      
+      final querySnapshot = await _firestore.collection('active_locations')
+          .where('gridId', isEqualTo: gridId)
+          .where('timestamp', isGreaterThan: Timestamp.fromDate(thirtyMinsAgo))
+          .get();
+
+      List<String> newEncounters = [];
+
+      for (var doc in querySnapshot.docs) {
+        String peerUid = doc.id;
+        if (peerUid != uid) {
+          String? encounteredName = await registerEncounter(peerUid);
+          if (encounteredName != null) {
+            newEncounters.add(encounteredName);
+          }
+        }
+      }
+
+      return newEncounters;
+    } catch (e) {
+      print("Erreur GPS Asynchrone: $e");
+      return [];
     }
   }
 
